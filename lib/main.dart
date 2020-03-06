@@ -1,113 +1,126 @@
-import 'dart:ffi';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:english_words/english_words.dart';
 import 'package:flutter/rendering.dart';
+import 'package:initialproject/models/item.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(App());
 
-class MyApp extends StatelessWidget {
+class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Startup Name Generator',
+      title: 'TODO List',
       theme: ThemeData(primarySwatch: Colors.green),
-      home: RandomWords(),
+      home: HomeScreen(),
     );
   }
 }
 
-class RandomWords extends StatefulWidget {
+class HomeScreen extends StatefulWidget {
+  var items = new List<Item>();
+
+  HomeScreen() {
+    items = [];
+  }
+
   @override
-  RandomWordsState createState() => RandomWordsState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class RandomWordsState extends State<RandomWords> {
-  final _suggestions = <WordPair>[];
-  final _biggerFont = const TextStyle(fontSize: 18.0);
-  final _saved = Set<WordPair>();
+class HomeScreenState extends State<HomeScreen> {
+  var newTextController = TextEditingController();
+
+  Future loadItems() async {
+    var pref = await SharedPreferences.getInstance();
+    var data = pref.getString('data');
+
+    if (data != null) {
+      Iterable decoded = jsonDecode(data);
+      List<Item> result = decoded.map((f) => Item.fromJson(f)).toList();
+      setState(() {
+        widget.items = result;
+      });
+    }
+  }
+
+  void addItem() {
+    var input = newTextController.text;
+    if (input.isEmpty) return;
+    setState(() {
+      widget.items.add(Item(title: input));
+    });
+    saveItem();
+    newTextController.clear();
+  }
+
+  void removeItem(index) {
+    setState(() {
+      widget.items.removeAt(index);
+    });
+    newTextController.clear();
+    saveItem();
+  }
+
+  saveItem() async {
+    var pref = await SharedPreferences.getInstance();
+    await pref.setString('data', jsonEncode(widget.items));
+  }
+
+  HomeScreenState() {
+    loadItems();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Startup Name Generator'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.list),
-            onPressed: _pushSaved,
-          )
-        ],
+        title: TextFormField(
+          controller: newTextController,
+          keyboardType: TextInputType.text,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+          ),
+          decoration: InputDecoration(
+            labelText: "Inclua uma nova tarefa",
+            labelStyle: TextStyle(color: Colors.white),
+          ),
+        ),
       ),
-      body: _buildSuggestions(),
-    );
-  }
-
-  Widget _buildRow(WordPair pair) {
-    final bool alreadySaved = _saved.contains(pair);
-
-    return ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: Icon(
-        alreadySaved ? Icons.favorite : Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          } else {
-            _saved.add(pair);
-          }
-        });
-      },
-    );
-  }
-
-  Widget _buildSuggestions() {
-    return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemBuilder: (context, i) {
-          if (i.isOdd) return Divider();
-
-          final index = i ~/ 2;
-          if (index >= _suggestions.length) {
-            _suggestions.addAll(generateWordPairs().take(10));
-          }
-          return _buildRow(_suggestions[index]);
-        });
-  }
-
-  void _pushSaved() {
-    Navigator.of(context).push(
-      MaterialPageRoute<Void>(
-        builder: (BuildContext context) { 
-          final Iterable<ListTile> titles = _saved.map(
-            (WordPair pair) {
-              return ListTile(
-                title: Text(
-                  pair.asPascalCase,
-                  style: _biggerFont,
-                ),
-              );
-            }
-          );
-
-          final List<Widget> divided = ListTile
-            .divideTiles(context: context, tiles: titles)
-            .toList();
-
-          return Scaffold(
-            appBar: AppBar(
-              title: Text('Saved Suggestion'),
+      body: ListView.builder(
+        itemCount: widget.items.length,
+        itemBuilder: (context, index) {
+          final item = widget.items[index];
+          return Dismissible(
+            child: CheckboxListTile(
+              title: Text(item.title),
+              key: Key(item.title),
+              value: item.done,
+              onChanged: (value) {
+                setState(() {
+                  item.done = value;
+                  saveItem();
+                });
+              },
             ),
-            body: ListView(children: divided,),
+            key: Key(item.title),
+            background: Container(
+              color: Colors.red.withOpacity(0.2),
+            ),
+            onDismissed: (direction) {
+              removeItem(index);
+            },
           );
-        }
-      )
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          addItem();
+        },
+        child: Icon(Icons.add),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 }
