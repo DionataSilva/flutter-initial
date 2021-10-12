@@ -14,8 +14,7 @@ class App extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: TransferForm(
-          title: 'Nova transferência'), //TransferPage(title: 'Trensferências'),
+      home: TransferPage(title: 'Trensferências'),
     );
   }
 }
@@ -35,85 +34,131 @@ class TransferForm extends StatelessWidget {
       appBar: AppBar(title: Text(title)),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _accountNumberController,
-              keyboardType: TextInputType.number,
-              style: TextStyle(fontSize: 16.0),
-              decoration: InputDecoration(
-                  labelText: 'Número da conta', hintText: '0000'),
-            ),
+          InputTextField(
+            labelText: 'Número da conta',
+            hintText: '0000',
+            controller: _accountNumberController,
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _transferValueController,
-              keyboardType: TextInputType.number,
-              style: TextStyle(fontSize: 16.0),
-              decoration: InputDecoration(
-                labelText: 'Valor e transferência',
-                hintText: '0.00',
-                icon: Icon(Icons.monetization_on),
-              ),
-            ),
+          InputTextField(
+            labelText: 'Valor e transferência',
+            hintText: '0.00',
+            controller: _transferValueController,
+            icon: const Icon(Icons.monetization_on),
           ),
           ElevatedButton(
-            onPressed: () {
-              final int? accountNumber =
-                  int.tryParse(_accountNumberController.text);
-              final double? transferValue =
-                  double.tryParse(_transferValueController.text);
-
-              if (accountNumber != null && transferValue != null) {
-                final _Transfer transfer = _Transfer(
-                  accountNumber,
-                  transferValue,
-                );
-
-                debugPrint('Transferência!: $transfer');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(transfer.toString()),
-                  ),
-                );
-              } else {
-                debugPrint('Campos obrigatórios!');
-              }
-            },
+            onPressed: () => _createTransfer(context),
             child: Text('Confirmar transferência'),
           )
         ],
       ),
     );
   }
+
+  void _createTransfer(BuildContext context) {
+    final int? accountNumber = int.tryParse(_accountNumberController.text);
+    final double? transferValue =
+        double.tryParse(_transferValueController.text);
+
+    if (accountNumber != null && transferValue != null) {
+      final _Transfer transfer = _Transfer(
+        accountNumber,
+        transferValue,
+      );
+
+      Navigator.pop(context, transfer);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(transfer.toString()),
+        ),
+      );
+    } else {
+      debugPrint('Campos obrigatórios!');
+    }
+  }
 }
 
-class TransferPage extends StatelessWidget {
+class InputTextField extends StatelessWidget {
+  final String labelText;
+  final String hintText;
+  final TextEditingController controller;
+  final Icon? icon;
+
+  const InputTextField({
+    Key? key,
+    required this.labelText,
+    required this.hintText,
+    required this.controller,
+    this.icon,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        style: TextStyle(fontSize: 16.0),
+        decoration: InputDecoration(
+          labelText: labelText,
+          hintText: hintText,
+          icon: icon,
+        ),
+      ),
+    );
+  }
+}
+
+class TransferPage extends StatefulWidget {
   final String title;
 
-  const TransferPage({Key? key, required this.title}) : super(key: key);
+  TransferPage({Key? key, required this.title}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    return TransferPageState();
+  }
+}
+
+class TransferPageState extends State<TransferPage> {
+  final List<_Transfer> transferList = [];
+
+  void _addTransfer(_Transfer transfer) {
+    setState(() {
+      transferList.add(transfer);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          children: [
-            _TransferItem(
-              transfer: _Transfer(1000, 20.00),
-            ),
-            _TransferItem(
-              transfer: _Transfer(1000, 05.00),
-            ),
-          ],
+        child: ListView.builder(
+          itemCount: transferList.length,
+          itemBuilder: (BuildContext context, int index) {
+            return _TransferItem(transfer: transferList[index]);
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {},
+        onPressed: () {
+          final Future<_Transfer?> future = Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TransferForm(title: 'Nova transferência'),
+            ),
+          );
+          future.then((transfer) {
+            debugPrint(transfer.toString());
+            if (transfer != null) {
+              _addTransfer(transfer);
+            }
+          });
+        },
         child: const Icon(Icons.add),
       ),
     );
@@ -145,6 +190,6 @@ class _Transfer {
 
   @override
   String toString() {
-    return '_Transfer{ accountNumber: $accountNumber, value: $value }';
+    return '_Transfer{accountNumber: $accountNumber, value: $value}';
   }
 }
