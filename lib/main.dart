@@ -14,38 +14,100 @@ class App extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: const TransferPage(title: 'Trensferências'),
+      home: TransferForm(
+          title: 'Nova transferência'), //TransferPage(title: 'Trensferências'),
     );
   }
 }
 
-class TransferPage extends StatefulWidget {
-  const TransferPage({Key? key, required this.title}) : super(key: key);
-
+class TransferForm extends StatelessWidget {
   final String title;
+  final TextEditingController _accountNumberController =
+      TextEditingController();
+  final TextEditingController _transferValueController =
+      TextEditingController();
+
+  TransferForm({Key? key, required this.title}) : super(key: key);
 
   @override
-  State<TransferPage> createState() => _TransferPageState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _accountNumberController,
+              keyboardType: TextInputType.number,
+              style: TextStyle(fontSize: 16.0),
+              decoration: InputDecoration(
+                  labelText: 'Número da conta', hintText: '0000'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _transferValueController,
+              keyboardType: TextInputType.number,
+              style: TextStyle(fontSize: 16.0),
+              decoration: InputDecoration(
+                labelText: 'Valor e transferência',
+                hintText: '0.00',
+                icon: Icon(Icons.monetization_on),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final int? accountNumber =
+                  int.tryParse(_accountNumberController.text);
+              final double? transferValue =
+                  double.tryParse(_transferValueController.text);
+
+              if (accountNumber != null && transferValue != null) {
+                final _Transfer transfer = _Transfer(
+                  accountNumber,
+                  transferValue,
+                );
+
+                debugPrint('Transferência!: $transfer');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(transfer.toString()),
+                  ),
+                );
+              } else {
+                debugPrint('Campos obrigatórios!');
+              }
+            },
+            child: Text('Confirmar transferência'),
+          )
+        ],
+      ),
+    );
+  }
 }
 
-class _TransferPageState extends State<TransferPage> {
+class TransferPage extends StatelessWidget {
+  final String title;
+
+  const TransferPage({Key? key, required this.title}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(title),
       ),
       body: Center(
         child: Column(
           children: [
             _TransferItem(
-              transfer: _Transfer(accountNumber: 1000, value: 30.00),
+              transfer: _Transfer(1000, 20.00),
             ),
             _TransferItem(
-              transfer: _Transfer(accountNumber: 1000, value: 20.00),
-            ),
-            _TransferItem(
-              transfer: _Transfer(accountNumber: 1000, value: 05.00),
+              transfer: _Transfer(1000, 05.00),
             ),
           ],
         ),
@@ -79,5 +141,10 @@ class _Transfer {
   final int accountNumber;
   final double value;
 
-  const _Transfer({required this.accountNumber, required this.value});
+  _Transfer(this.accountNumber, this.value);
+
+  @override
+  String toString() {
+    return '_Transfer{ accountNumber: $accountNumber, value: $value }';
+  }
 }
