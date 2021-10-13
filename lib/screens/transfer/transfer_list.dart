@@ -1,14 +1,13 @@
 import 'package:bytebank/components/transfer_item.dart';
 import 'package:bytebank/models/transfer.dart';
-import 'package:bytebank/screens/transfer_form.dart';
+import 'package:bytebank/screens/transfer/transfer_form.dart';
 import 'package:flutter/material.dart';
 
-const _newTransferTitle = 'Nova transferência';
+const pageTitle = 'Transferências';
 
 class TransferPage extends StatefulWidget {
-  final String title;
 
-  const TransferPage({Key? key, required this.title}) : super(key: key);
+  const TransferPage({Key? key}) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -31,7 +30,7 @@ class TransferPageState extends State<TransferPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text(pageTitle),
       ),
       body: Center(
         child: ListView.builder(
@@ -47,7 +46,7 @@ class TransferPageState extends State<TransferPage> {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  const TransferForm(title: _newTransferTitle),
+                  const TransferForm(),
             ),
           );
           future.then((transfer) => _addTransfer(transfer));

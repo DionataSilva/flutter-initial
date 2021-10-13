@@ -1,8 +1,7 @@
-import 'package:bytebank/screens/transfer_list.dart';
+import 'package:bytebank/screens/dashboard/dashboard.dart';
 import 'package:flutter/material.dart';
 
 const _appName = 'ByteBank';
-const _transferPageName = 'Trensferências';
 
 void main() {
   runApp(const App());
@@ -17,10 +16,14 @@ class App extends StatelessWidget {
       title: _appName,
       theme: ThemeData(
         primarySwatch: Colors.green,
+        primaryColor: Colors.green[900],
+        accentColor: Colors.blueAccent[700],
+        buttonTheme: ButtonThemeData(
+          buttonColor: Colors.blueAccent[700],
+          textTheme: ButtonTextTheme.primary,
+        )
       ),
-      home: const TransferPage(
-        title: _transferPageName,
-      ),
+      home: const Dashboard(),
     );
   }
 }
