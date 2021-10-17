@@ -15,13 +15,16 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: _appName,
       theme: ThemeData(
-        primarySwatch: Colors.green,
         primaryColor: Colors.green[900],
-        accentColor: Colors.blueAccent[700],
         buttonTheme: ButtonThemeData(
           buttonColor: Colors.blueAccent[700],
           textTheme: ButtonTextTheme.primary,
-        )
+        ),
+        colorScheme: ColorScheme.fromSwatch(
+          primarySwatch: Colors.green,
+        ).copyWith(
+          secondary: Colors.blueAccent[700],
+        ),
       ),
       home: const Dashboard(),
     );

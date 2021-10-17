@@ -1,4 +1,5 @@
 import 'package:bytebank/components/input_text.dart';
+import 'package:bytebank/database/dao/transfer_dao.dart';
 import 'package:bytebank/enums/snack_bar_type.dart';
 import 'package:bytebank/utils/snack_bar.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,6 @@ const _succeessMessage = 'Transferência realizada com sucesso!';
 const _errorMessage = 'Todos os campos são obrigatórios!';
 
 class TransferForm extends StatefulWidget {
-
   const TransferForm({Key? key}) : super(key: key);
 
   @override
@@ -32,6 +32,8 @@ class TransferFormState extends State<TransferForm> {
 
   final TextEditingController _transferValueController =
       TextEditingController();
+
+  final TransferDao _transferDao = TransferDao();
 
   @override
   Widget build(BuildContext context) {
@@ -82,13 +84,15 @@ class TransferFormState extends State<TransferForm> {
 
     if (accountNumber != null && transferValue != null) {
       final Transfer transfer = Transfer(
+        0,
         accountNumber,
         transferValue,
       );
 
-      Navigator.pop(context, transfer);
-
-      showSnackBar(context, message: _succeessMessage);
+      _transferDao.save(transfer).then((id) => {
+            Navigator.pop(context, transfer),
+            showSnackBar(context, message: _succeessMessage),
+          });
     } else {
       showSnackBar(context, message: _errorMessage, type: SnackBarType.error);
     }

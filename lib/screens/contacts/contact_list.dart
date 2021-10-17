@@ -1,9 +1,12 @@
 import 'package:bytebank/database/dao/contact_dao.dart';
 import 'package:bytebank/models/contact.dart';
 import 'package:bytebank/screens/contacts/contact_form.dart';
+import 'package:bytebank/utils/loader.dart';
 import 'package:flutter/material.dart';
 
 const _pageTitle = 'Contacts';
+const _emptyContactListMessage =
+    'Você não tem nenhum contato ainda. \n Clique no botão para adicionar um novo contato!';
 
 class ContactList extends StatefulWidget {
   const ContactList({Key? key}) : super(key: key);
@@ -31,26 +34,11 @@ class _ContactListState extends State<ContactList> {
             case ConnectionState.none:
               break;
             case ConnectionState.waiting:
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: const [
-                    CircularProgressIndicator(),
-                    Text('Loading'),
-                  ],
-                ),
-              );
+              return const Loader();
             case ConnectionState.active:
               break;
             case ConnectionState.done:
-              return ListView.builder(
-                itemCount: contactList?.length,
-                itemBuilder: (BuildContext context, int index) {
-                  Contact contact = contactList![index];
-                  return ContactCard(contact);
-                },
-              );
+              return _contactItemList(contactList!);
             default:
           }
 
@@ -58,6 +46,23 @@ class _ContactListState extends State<ContactList> {
         },
       ),
       floatingActionButton: _floatingActionButton(context),
+    );
+  }
+
+  Center _contactItemList(List<Contact> contactList) {
+    return Center(
+      child: contactList.isEmpty
+          ? const Text(
+              _emptyContactListMessage,
+              textAlign: TextAlign.center,
+            )
+          : ListView.builder(
+              itemCount: contactList.length,
+              itemBuilder: (BuildContext context, int index) {
+                Contact contact = contactList[index];
+                return ContactCard(contact);
+              },
+            ),
     );
   }
 

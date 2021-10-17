@@ -1,4 +1,5 @@
 import 'package:bytebank/database/dao/contact_dao.dart';
+import 'package:bytebank/database/dao/transfer_dao.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -10,6 +11,7 @@ Future<Database> getDatabase() async {
   return openDatabase(
     path,
     onCreate: (db, version) {
+      db.execute(TransferDao.createTransferTable);
       db.execute(ContactDao.createContactTable);
     },
     version: 1,
