@@ -1,9 +1,9 @@
 import 'package:bytebank/components/input_text.dart';
+import 'package:bytebank/database/dao/contact_dao.dart';
 import 'package:bytebank/enums/snack_bar_type.dart';
 import 'package:bytebank/models/contact.dart';
 import 'package:bytebank/utils/snack_bar.dart';
 import 'package:flutter/material.dart';
-
 
 const _pageTitle = 'New Contact';
 const _accountNumberLabel = 'Account number';
@@ -20,9 +20,9 @@ class ContactForm extends StatefulWidget {
 }
 
 class _ContactFormState extends State<ContactForm> {
-
   final TextEditingController _fullNameCtrl = TextEditingController();
   final TextEditingController _accountNumberCtrl = TextEditingController();
+  final ContactDao _contactDao = ContactDao();
 
   @override
   Widget build(BuildContext context) {
@@ -72,12 +72,15 @@ class _ContactFormState extends State<ContactForm> {
 
     if (accountNumber != null) {
       final Contact contact = Contact(
-        accountNumber,
+        0,
         fullName,
+        accountNumber,
       );
 
-      Navigator.pop(context, contact);
-      showSnackBar(context, message: _succeessMessage);
+      _contactDao.save(contact).then((id) => {
+            Navigator.pop(context, contact),
+            showSnackBar(context, message: _succeessMessage),
+          });
     } else {
       showSnackBar(context, message: _errorMessage, type: SnackBarType.error);
     }

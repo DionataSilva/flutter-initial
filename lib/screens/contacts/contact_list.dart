@@ -1,3 +1,4 @@
+import 'package:bytebank/database/dao/contact_dao.dart';
 import 'package:bytebank/models/contact.dart';
 import 'package:bytebank/screens/contacts/contact_form.dart';
 import 'package:flutter/material.dart';
@@ -8,11 +9,11 @@ class ContactList extends StatefulWidget {
   const ContactList({Key? key}) : super(key: key);
 
   @override
-  _ContactListState createState() => _ContactListState();
+  State<ContactList> createState() => _ContactListState();
 }
 
 class _ContactListState extends State<ContactList> {
-  final List<Contact> contactList = [];
+  final ContactDao _contactDao = ContactDao();
 
   @override
   Widget build(BuildContext context) {
@@ -20,22 +21,67 @@ class _ContactListState extends State<ContactList> {
       appBar: AppBar(
         title: const Text(_pageTitle),
       ),
-      body: _contactList(),
+      body: FutureBuilder<List<Contact>>(
+        initialData: const [],
+        future: _contactDao.findAll(),
+        builder: (context, snapshot) {
+          final List<Contact>? contactList = snapshot.data;
+
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+              break;
+            case ConnectionState.waiting:
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: const [
+                    CircularProgressIndicator(),
+                    Text('Loading'),
+                  ],
+                ),
+              );
+            case ConnectionState.active:
+              break;
+            case ConnectionState.done:
+              return ListView.builder(
+                itemCount: contactList?.length,
+                itemBuilder: (BuildContext context, int index) {
+                  Contact contact = contactList![index];
+                  return ContactCard(contact);
+                },
+              );
+            default:
+          }
+
+          return const Text('Error');
+        },
+      ),
       floatingActionButton: _floatingActionButton(context),
     );
   }
 
-  ListView _contactList() {
-    return ListView.builder(
-      itemCount: contactList.length,
-      itemBuilder: (BuildContext context, int index) {
-        Contact contact = contactList[index];
-        return _contactCard(contact);
+  FloatingActionButton _floatingActionButton(BuildContext context) {
+    return FloatingActionButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ContactForm(),
+          ),
+        ).then((res) => {setState(() {})});
       },
+      child: const Icon(Icons.add),
     );
   }
+}
 
-  Card _contactCard(Contact contact) {
+class ContactCard extends StatelessWidget {
+  final Contact contact;
+  const ContactCard(this.contact, {Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       child: ListTile(
         title: Text(
@@ -48,28 +94,5 @@ class _ContactListState extends State<ContactList> {
         ),
       ),
     );
-  }
-
-  FloatingActionButton _floatingActionButton(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () {
-        final Future<Contact?> future = Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const ContactForm(),
-          ),
-        );
-        future.then((contact) => _addContact(contact));
-      },
-      child: const Icon(Icons.add),
-    );
-  }
-
-  _addContact(Contact? contact) {
-    if (contact != null) {
-      setState(() {
-        contactList.add(contact);
-      });
-    }
   }
 }
